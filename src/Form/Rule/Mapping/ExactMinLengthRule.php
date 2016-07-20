@@ -8,37 +8,31 @@ use Boekkooi\Bundle\JqueryValidationBundle\Form\RuleCollection;
 use Boekkooi\Bundle\JqueryValidationBundle\Form\RuleMessage;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Validator\Constraint;
-use Symfony\Component\Validator\Constraints\Range;
-use Symfony\Component\Validator\Constraints\Type;
+use Symfony\Component\Validator\Constraints\Length;
 
 /**
  * @author Warnar Boekkooi <warnar@boekkooi.net>
  */
-class NumberRule implements ConstraintMapperInterface
+class ExactMinLengthRule implements ConstraintMapperInterface
 {
-    const RULE_NAME = 'number';
+    const RULE_NAME = 'minlength';
 
     /**
      * {@inheritdoc}
      */
     public function resolve(Constraint $constraint, FormInterface $form, RuleCollection $collection)
     {
+        /** @var \Symfony\Component\Validator\Constraints\Length $constraint */
         if (!$this->supports($constraint, $form)) {
             throw new LogicException();
         }
 
-        $message = null;
-        if ($constraint instanceof Range) {
-            $message = new RuleMessage($constraint->invalidMessage);
-        } elseif ($constraint instanceof Type) {
-            $message = new RuleMessage($constraint->message, array('{{ type }}' => $constraint->type));
-        }
         $collection->set(
             self::RULE_NAME,
             new ConstraintRule(
                 self::RULE_NAME,
-                true,
-                $message,
+                $constraint->max,
+                new RuleMessage($constraint->exactMessage, array('{{ limit }}' => $constraint->max), (int) $constraint->max),
                 $constraint->groups
             )
         );
@@ -46,11 +40,11 @@ class NumberRule implements ConstraintMapperInterface
 
     public function supports(Constraint $constraint, FormInterface $form)
     {
-        $class = get_class($constraint);
+        /** @var Length $constraint */
+        if (get_class($constraint) === Length::class && $constraint->min == $constraint->max) {
+            return true;
+        }
 
-        return $class === Range::class || (
-            $class === Type::class &&
-            in_array(strtolower($constraint->type), array('int', 'integer', 'digit', 'float', 'double'), true)
-        );
+        return false;
     }
 }

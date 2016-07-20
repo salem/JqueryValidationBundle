@@ -47,6 +47,9 @@
             "Tests\\Boekkooi\\Bundle\\JqueryValidationBundle\\": "tests/"
         }
     },
+    "extra": {
+        "symfony-assets-install":"symlink"
+    },
     "prefer-stable": true,
     "minimum-stability": "dev"
 }
